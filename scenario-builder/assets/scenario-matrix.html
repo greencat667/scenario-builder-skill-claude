@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scenario Matrix</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1d2433; --muted: #5b6474; --line: #d9dde5;
+    --q1: #2f8f83; --q2: #55519c; --q3: #c2562b; --q4: #7a6a1f;
+    --q1-soft: #e3f2ef; --q2-soft: #e8e7f5; --q3-soft: #f8e6dd; --q4-soft: #f2eedb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151c; --panel: #1b2029; --ink: #e8ebf1; --muted: #a2aab8; --line: #313846;
+      --q1: #5cc2b4; --q2: #9d99e0; --q3: #ec8a5e; --q4: #d2bd5a;
+      --q1-soft: #183632; --q2-soft: #25243d; --q3-soft: #3b2419; --q4-soft: #332e17;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151c; --panel: #1b2029; --ink: #e8ebf1; --muted: #a2aab8; --line: #313846;
+    --q1: #5cc2b4; --q2: #9d99e0; --q3: #ec8a5e; --q4: #d2bd5a;
+    --q1-soft: #183632; --q2-soft: #25243d; --q3-soft: #3b2419; --q4-soft: #332e17;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 6px; }
+  .question { color: var(--muted); margin: 0 0 4px; font-size: 1.05rem; }
+  .note { color: var(--muted); font-size: .85rem; margin: 0 0 28px; }
+  .matrix-wrap { display: grid; grid-template-columns: 28px 1fr; grid-template-rows: auto 1fr auto; gap: 8px; }
+  .y-label { grid-row: 2; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center;
+    font-size: .8rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+  .x-poles, .x-label { grid-column: 2; display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+  .x-label { justify-content: center; font-weight: 600; }
+  .matrix { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; }
+  .y-poles { position: absolute; left: -2px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+  .quad { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--panel);
+    cursor: pointer; text-align: left; color: inherit; font: inherit; min-height: 150px;
+    border-top: 5px solid var(--c); transition: transform .12s ease, box-shadow .12s ease; }
+  .quad:hover, .quad:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); outline: none; }
+  .quad[aria-pressed="true"] { background: var(--soft); }
+  .quad .poles { font-size: .72rem; color: var(--muted); margin-bottom: 6px; }
+  .quad h2 { font-size: 1.15rem; margin: 0 0 6px; color: var(--c); }
+  .quad p { margin: 0; font-size: .92rem; }
+  .detail { margin-top: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; border-left: 5px solid var(--c, var(--line)); }
+  .detail h3 { margin: 0 0 4px; font-size: 1.25rem; color: var(--c); }
+  .detail h4 { margin: 18px 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .detail ul { margin: 0; padding-left: 20px; }
+  .detail li { margin: 3px 0; }
+  .vignette { font-style: italic; border-left: 3px solid var(--line); padding-left: 12px; margin: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h3 { margin: 0 0 8px; font-size: 1rem; }
+  .card ul { margin: 0; padding-left: 20px; }
+  .card li { margin: 4px 0; font-size: .93rem; }
+  footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
+  @media (max-width: 700px) {
+    .matrix { grid-template-columns: 1fr; }
+    .grid2 { grid-template-columns: 1fr; }
+    .matrix-wrap { grid-template-columns: 1fr; }
+    .y-label, .x-poles, .x-label { display: none; }
+    .quad .poles { display: block; }
+  }
+  @media (min-width: 701px) { .quad .poles { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title"></h1>
+  <p class="question" id="question"></p>
+  <p class="note">Four plausible futures, not predictions. Select a world for details.</p>
+
+  <div class="matrix-wrap">
+    <div class="x-poles" style="grid-row:1"><span id="x-left"></span><span id="x-right"></span></div>
+    <div class="y-label" id="y-label"></div>
+    <div class="matrix" id="matrix"></div>
+    <div class="x-label" id="x-label" style="grid-row:3"></div>
+  </div>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+
+  <div class="grid2">
+    <div class="card"><h3>True in every world</h3><ul id="predetermined"></ul></div>
+    <div class="card"><h3>No-regret moves</h3><ul id="noregret"></ul></div>
+  </div>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+/* ===== Replace only this object ===================================== */
+const SCENARIOS = {
+  title: "Topic: Four Futures to 2035",
+  question: "Focal question goes here?",
+  footer: "Built with the scenario-builder skill.",
+  axes: {
+    x: { name: "Axis B name", left: "Left pole", right: "Right pole" },
+    y: { name: "Axis A name", top: "Top pole", bottom: "Bottom pole" }
+  },
+  // quadrant: "tl" | "tr" | "bl" | "br"
+  worlds: [
+    { quadrant: "tl", name: "World one", headline: "One-line headline.",
+      truths: ["What's true 1", "What's true 2"], vignette: "A short moment in this world.",
+      winners: "Who does well", losers: "Who is squeezed",
+      forUs: ["Implication 1"], indicators: ["Indicator 1"] },
+    { quadrant: "tr", name: "World two", headline: "One-line headline.", truths: [], vignette: "", winners: "", losers: "", forUs: [], indicators: [] },
+    { quadrant: "bl", name: "World three", headline: "One-line headline.", truths: [], vignette: "", winners: "", losers: "", forUs: [], indicators: [] },
+    { quadrant: "br", name: "World four", headline: "One-line headline.", truths: [], vignette: "", winners: "", losers: "", forUs: [], indicators: [] }
+  ],
+  predetermined: ["Predetermined element 1"],
+  noRegret: ["No-regret move 1"]
+};
+/* ==================================================================== */
+
+const COLORS = { tl: "q1", tr: "q2", bl: "q3", br: "q4" };
+const ORDER = ["tl", "tr", "bl", "br"];
+const el = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const list = (items) => (items || []).map((i) => `<li>${esc(i)}</li>`).join("");
+
+document.title = SCENARIOS.title;
+el("title").textContent = SCENARIOS.title;
+el("question").textContent = SCENARIOS.question;
+el("footer").textContent = SCENARIOS.footer || "";
+const { x, y } = SCENARIOS.axes;
+el("x-left").textContent = "← " + x.left;
+el("x-right").textContent = x.right + " →";
+el("x-label").textContent = x.name;
+el("y-label").textContent = `${y.bottom}  ←  ${y.name}  →  ${y.top}`;
+el("predetermined").innerHTML = list(SCENARIOS.predetermined);
+el("noregret").innerHTML = list(SCENARIOS.noRegret);
+
+const poleText = (q) => `${q[0] === "t" ? y.top : y.bottom} · ${q[1] === "l" ? x.left : x.right}`;
+const byQuad = Object.fromEntries(SCENARIOS.worlds.map((w) => [w.quadrant, w]));
+
+el("matrix").innerHTML = ORDER.map((q) => {
+  const w = byQuad[q] || { name: "—", headline: "" };
+  const c = COLORS[q];
+  return `<button class="quad" data-q="${q}" aria-pressed="false"
+      style="--c:var(--${c});--soft:var(--${c}-soft)">
+      <div class="poles">${esc(poleText(q))}</div>
+      <h2>${esc(w.name)}</h2><p>${esc(w.headline)}</p></button>`;
+}).join("");
+
+function show(q) {
+  const w = byQuad[q]; if (!w) return;
+  const c = COLORS[q];
+  document.querySelectorAll(".quad").forEach((b) => b.setAttribute("aria-pressed", b.dataset.q === q));
+  const d = el("detail");
+  d.style.setProperty("--c", `var(--${c})`);
+  d.innerHTML = `
+    <h3>${esc(w.name)}</h3><div style="color:var(--muted)">${esc(poleText(q))}</div>
+    ${w.vignette ? `<h4>A moment in this world</h4><p class="vignette">${esc(w.vignette)}</p>` : ""}
+    ${w.truths?.length ? `<h4>What's true</h4><ul>${list(w.truths)}</ul>` : ""}
+    ${w.winners || w.losers ? `<h4>Winners and losers</h4><ul><li><strong>Doing well:</strong> ${esc(w.winners)}</li><li><strong>Squeezed:</strong> ${esc(w.losers)}</li></ul>` : ""}
+    ${w.forUs?.length ? `<h4>What it means for us</h4><ul>${list(w.forUs)}</ul>` : ""}
+    ${w.indicators?.length ? `<h4>Early-warning indicators</h4><ul>${list(w.indicators)}</ul>` : ""}`;
+}
+el("matrix").addEventListener("click", (e) => {
+  const b = e.target.closest(".quad"); if (!b) return;
+  show(b.dataset.q);
+  if (window.innerWidth <= 700) el("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+show("tl");
+</script>
+</body>
+</html>
